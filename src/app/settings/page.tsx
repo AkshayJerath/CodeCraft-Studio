@@ -8,12 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Moon, Sun, User } from 'lucide-react';
 import Link from 'next/link'; // Ensure Link is imported
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState(true); // Default to true or derive from localStorage
   const [username, setUsername] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
+    // Auth check
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    setIsAuthenticated(loggedIn);
+    if (!loggedIn) {
+      router.replace('/login'); // Redirect if not authenticated
+      return; // Stop further execution if not authenticated
+    }
+
     // Load theme preference from localStorage on mount
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) {
@@ -21,11 +32,11 @@ export default function SettingsPage() {
       setIsDarkTheme(newIsDarkTheme);
       document.documentElement.classList.toggle('dark', newIsDarkTheme);
     } else {
-      // Default to dark or check system preference if no theme stored
+      // Default to system preference if no theme stored, then save it
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setIsDarkTheme(prefersDark);
       document.documentElement.classList.toggle('dark', prefersDark);
-      localStorage.setItem('theme', prefersDark ? 'dark' : 'light'); // Save initial preference
+      localStorage.setItem('theme', prefersDark ? 'dark' : 'light'); 
     }
 
     // Load username from localStorage
@@ -33,13 +44,22 @@ export default function SettingsPage() {
     if (storedUsername) {
       setUsername(storedUsername);
     }
-  }, []);
+  }, [router]);
 
   const toggleTheme = (checked: boolean) => {
     setIsDarkTheme(checked);
     localStorage.setItem('theme', checked ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', checked);
+    if (checked) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
+  
+  if (!isAuthenticated) {
+    // Render nothing or a loading indicator while redirecting
+    return null; 
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
@@ -105,17 +125,9 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <p className="text-muted-foreground">
-                  You are not currently logged in. Account details will appear here once you log in.
+                  User account details not found. Please try logging in again.
                 </p>
               )}
-               <div className="mt-6 space-x-2">
-                <Button variant="outline" asChild>
-                  <Link href="/login">Login Page</Link>
-                </Button>
-                 <Button variant="outline" asChild>
-                  <Link href="/register">Register Page</Link>
-                </Button>
-              </div>
             </CardContent>
           </Card>
           

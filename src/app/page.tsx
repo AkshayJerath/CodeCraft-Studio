@@ -48,17 +48,29 @@ export default function CodeCraftStudioPage() {
 
   useEffect(() => {
     console.log("Editor page: useEffect for auth check triggered.");
-    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    console.log("Editor page: localStorage 'isLoggedIn' status from localStorage:", loggedIn);
-    
-    setIsAuthenticated(loggedIn);
-    setIsLoadingAuth(false); 
+    // Ensure this runs only client-side
+    if (typeof window !== 'undefined') {
+      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      console.log("Editor page: localStorage 'isLoggedIn' status from localStorage:", loggedIn);
+      
+      setIsAuthenticated(loggedIn);
+      setIsLoadingAuth(false); 
 
-    if (!loggedIn) {
-      console.log("Editor page: Not authenticated, redirecting to /login.");
-      router.replace('/login');
-    } else {
-      console.log("Editor page: Authenticated, proceeding to render editor.");
+      if (!loggedIn) {
+        console.log("Editor page: Not authenticated, redirecting to /login.");
+        router.replace('/login');
+      } else {
+        console.log("Editor page: Authenticated, proceeding to render editor.");
+        // Apply theme after confirming authentication and client-side context
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) {
+          document.documentElement.classList.toggle('dark', storedTheme === 'dark');
+        } else {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', prefersDark);
+          localStorage.setItem('theme', prefersDark ? 'dark' : 'light');
+        }
+      }
     }
   }, [router]);
 
@@ -72,24 +84,11 @@ export default function CodeCraftStudioPage() {
   }, []); 
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme) {
-      document.documentElement.classList.toggle('dark', storedTheme === 'dark');
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    }
-  }, []);
-
-  useEffect(() => {
     if (isAuthenticated) {
       setCode(initialCodeSamples[selectedLanguage] || `// Start coding in ${selectedLanguage}...`);
-      // Add message only if selectedLanguage has actually changed from a previous value 
-      // and it's not the initial load state where prevSelectedLanguageRef.current is undefined.
       if (prevSelectedLanguageRef.current !== undefined && prevSelectedLanguageRef.current !== selectedLanguage) {
         addTerminalMessage('system', `Switched to ${selectedLanguage} environment. Sample code loaded.`);
       }
-      // Update ref for the next render.
       prevSelectedLanguageRef.current = selectedLanguage;
     }
   }, [selectedLanguage, isAuthenticated, addTerminalMessage]);
@@ -99,16 +98,15 @@ export default function CodeCraftStudioPage() {
     monacoRef.current = monacoInstance;
     if (isAuthenticated) {
       editor.focus();
+      if (monacoInstance) { 
+          editor.addCommand(
+            monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
+            () => {
+              if (!isExecuting && isAuthenticated) handleRunCode(); 
+            }
+          );
+        }
     }
-    
-    if (monacoInstance && isAuthenticated) { 
-        editor.addCommand(
-          monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
-          () => {
-            if (!isExecuting && isAuthenticated) handleRunCode(); 
-          }
-        );
-      }
   };
 
   const handleLanguageChange = (language: string) => {
@@ -305,5 +303,3 @@ export default function CodeCraftStudioPage() {
     </div>
   );
 }
-
-    
