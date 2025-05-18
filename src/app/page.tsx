@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -44,6 +45,18 @@ export default function CodeCraftStudioPage() {
       timestamp: (type !== 'user-input' && type !== 'input-prompt') ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit'}) : undefined,
     }]);
   }, []);
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      document.documentElement.classList.toggle('dark', storedTheme === 'dark');
+    } else {
+       // If no theme in localStorage, ensure default 'dark' from layout is applied or check system pref
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', prefersDark);
+    }
+  }, []);
+
 
   useEffect(() => {
     setCode(initialCodeSamples[selectedLanguage] || `// Start coding in ${selectedLanguage}...`);

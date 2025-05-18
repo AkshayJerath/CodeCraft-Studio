@@ -1,6 +1,8 @@
+
 "use client";
 
 import type { FC } from 'react';
+import Link from 'next/link'; // Import Link
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Play, Download, Sparkles, Settings, Trash2 } from 'lucide-react';
+import { Play, Download, Sparkles, Settings, Trash2, UserCircle } from 'lucide-react';
 
 interface AppHeaderProps {
   selectedLanguage: string;
@@ -36,10 +38,10 @@ export const AppHeader: FC<AppHeaderProps> = ({
 }) => {
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm">
-      <div className="flex items-center gap-3">
+      <Link href="/" className="flex items-center gap-3">
         <LogoIcon className="h-7 w-7 text-primary" />
         <h1 className="text-xl font-bold tracking-tight text-foreground">CodeCraft Studio</h1>
-      </div>
+      </Link>
       <div className="flex items-center gap-2 md:gap-3">
         <Select value={selectedLanguage} onValueChange={onLanguageChange}>
           <SelectTrigger className="w-[130px] md:w-[150px] bg-background text-foreground focus:ring-primary h-9">
@@ -102,14 +104,32 @@ export const AppHeader: FC<AppHeaderProps> = ({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                <Settings className="h-5 w-5" />
+              <Button variant="outline" size="icon" asChild className="hover:bg-primary/10 hover:text-primary">
+                <Link href="/settings">
+                  <Settings className="h-5 w-5" />
+                </Link>
               </Button>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border-border">
-              <p>Settings (Coming Soon)</p>
+              <p>Settings</p>
             </TooltipContent>
           </Tooltip>
+          
+          {/* Basic Login/Register link example - can be improved with auth state */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">
+                    <Link href="/login">
+                        <UserCircle className="h-5 w-5 mr-1 md:mr-2" />
+                        <span className="hidden md:inline">Login</span>
+                    </Link>
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border-border">
+                <p>Login or Register</p>
+            </TooltipContent>
+          </Tooltip>
+
         </TooltipProvider>
       </div>
     </header>

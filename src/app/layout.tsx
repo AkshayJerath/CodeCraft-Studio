@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { Inter } from 'next/font/google'; 
 import { Geist_Mono } from 'next/font/google';
@@ -25,7 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark"> {/* Apply dark class to html for default dark theme */}
+    // The 'dark' class can be dynamically managed by client-side theme preference logic
+    // (e.g., in page.tsx or settings/page.tsx via localStorage and useEffect)
+    // For default, we can still set it here.
+    <html lang="en" className="dark"> 
       <body className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}> {/* font-sans uses Inter */}
         {children}
         <Toaster />
