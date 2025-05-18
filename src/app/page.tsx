@@ -9,6 +9,8 @@ import { TerminalOutput, type TerminalMessage } from '@/components/terminal/Term
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useToast } from "@/hooks/use-toast";
 import { explainCode, type ExplainCodeInput } from '@/ai/flows/explain-code';
+import { useRouter } from 'next/navigation'; // Import useRouter
+import { Skeleton } from '@/components/ui/skeleton'; // For loading state
 
 const initialCodeSamples: Record<string, string> = {
   python: 'name = input("Enter your name: ")\nprint(f"Hello, {name}!")',
@@ -33,12 +35,34 @@ export default function CodeCraftStudioPage() {
   const [showInputPrompt, setShowInputPrompt] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isExplaining, setIsExplaining] = useState(false);
+  
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+  
   const { toast } = useToast();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
 
+  useEffect(() => {
+    // Client-side only check for authentication
+    console.log("Editor page: useEffect for auth check triggered.");
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    console.log("Editor page: localStorage 'isLoggedIn' status from localStorage:", loggedIn);
+    
+    setIsAuthenticated(loggedIn);
+    setIsLoadingAuth(false); // Done checking
+
+    if (!loggedIn) {
+      console.log("Editor page: Not authenticated, redirecting to /login.");
+      router.replace('/login');
+    } else {
+      console.log("Editor page: Authenticated, proceeding to render editor.");
+    }
+  }, [router]); // router is a stable dependency
+
   const addTerminalMessage = useCallback((type: TerminalMessage['type'], content: string) => {
-    setTerminalMessages(prev => [...prev.slice(-100), { // Keep last 100 messages
+    setTerminalMessages(prev => [...prev.slice(-100), {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, 
       type, 
       content,
@@ -51,7 +75,6 @@ export default function CodeCraftStudioPage() {
     if (storedTheme) {
       document.documentElement.classList.toggle('dark', storedTheme === 'dark');
     } else {
-       // If no theme in localStorage, ensure default 'dark' from layout is applied or check system pref
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       document.documentElement.classList.toggle('dark', prefersDark);
     }
@@ -59,23 +82,29 @@ export default function CodeCraftStudioPage() {
 
 
   useEffect(() => {
-    setCode(initialCodeSamples[selectedLanguage] || `// Start coding in ${selectedLanguage}...`);
-    if (terminalMessages.length > 1 || terminalMessages[0].id !== 'welcome') { // Avoid duplicate message on initial load
-        addTerminalMessage('system', `Switched to ${selectedLanguage} environment. Sample code loaded.`);
+    // Only run if authenticated
+    if (isAuthenticated) {
+      setCode(initialCodeSamples[selectedLanguage] || `// Start coding in ${selectedLanguage}...`);
+      if (terminalMessages.length > 1 || terminalMessages[0].id !== 'welcome') {
+          addTerminalMessage('system', `Switched to ${selectedLanguage} environment. Sample code loaded.`);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLanguage]); // addTerminalMessage removed from deps to avoid loop on init
+  }, [selectedLanguage, isAuthenticated]); // addTerminalMessage removed, isAuthenticated added
   
   const handleEditorDidMount = (editor: any, monacoInstance: Monaco) => {
     editorRef.current = editor;
     monacoRef.current = monacoInstance;
-    editor.focus();
+    // Only focus if authenticated and editor is ready
+    if (isAuthenticated) {
+      editor.focus();
+    }
     
     if (monacoInstance) {
         editor.addCommand(
           monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
           () => {
-            if (!isExecuting) handleRunCode();
+            if (!isExecuting && isAuthenticated) handleRunCode();
           }
         );
       }
@@ -86,6 +115,7 @@ export default function CodeCraftStudioPage() {
   };
 
   const handleRunCode = useCallback(() => {
+    if (!isAuthenticated) return; // Should not happen if guard is effective
     setIsExecuting(true);
     addTerminalMessage('log', `Executing ${selectedLanguage} code... (Simulation)`);
     
@@ -104,9 +134,10 @@ export default function CodeCraftStudioPage() {
 
     addTerminalMessage('input-prompt', `Enter input for your program (if any), then press Enter:`);
     setShowInputPrompt(true);
-  }, [selectedLanguage, addTerminalMessage]);
+  }, [selectedLanguage, addTerminalMessage, isAuthenticated]);
 
   const handleTerminalInputCommand = (input: string) => {
+    if (!isAuthenticated) return;
     setShowInputPrompt(false);
     addTerminalMessage('user-input', input || "(empty input)");
     
@@ -127,8 +158,8 @@ export default function CodeCraftStudioPage() {
   };
 
   const handleDownloadCode = () => {
-    if (!code.trim()) {
-      toast({ title: "Empty Code", description: "There's no code to download.", variant: "destructive" });
+    if (!isAuthenticated || !code.trim()) {
+      toast({ title: "Empty Code", description: "There's no code to download or you are not authenticated.", variant: "destructive" });
       return;
     }
     const fileExtensionMap: Record<string, string> = {
@@ -150,8 +181,8 @@ export default function CodeCraftStudioPage() {
   };
 
   const handleExplainCode = async () => {
-    if (!code.trim()) {
-      toast({ title: "Empty Code", description: "Write some code to explain.", variant: "destructive" });
+    if (!isAuthenticated || !code.trim()) {
+      toast({ title: "Empty Code", description: "Write some code to explain or you are not authenticated.", variant: "destructive" });
       return;
     }
     setIsExplaining(true);
@@ -176,6 +207,7 @@ export default function CodeCraftStudioPage() {
   };
   
   const handleClearTerminal = () => {
+    if (!isAuthenticated) return;
     setTerminalMessages([
         { 
             id: `${Date.now()}-cleared`, 
@@ -185,10 +217,36 @@ export default function CodeCraftStudioPage() {
         }
     ]);
     setShowInputPrompt(false);
-    setIsExecuting(false); // Reset execution state if terminal is cleared mid-execution
+    setIsExecuting(false);
     toast({ title: "Terminal Cleared" });
   };
 
+  if (isLoadingAuth) {
+    return (
+      <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden items-center justify-center">
+        <div className="space-y-4 p-8 rounded-lg bg-card shadow-xl text-center">
+            <Skeleton className="h-8 w-48 mx-auto" />
+            <Skeleton className="h-4 w-64 mx-auto" />
+            <Skeleton className="h-4 w-56 mx-auto" />
+            <p className="text-muted-foreground mt-2">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If, after loading, not authenticated, this component should not render its main content.
+  // The useEffect with router.replace('/login') should prevent this from being visible for long, if at all.
+  if (!isAuthenticated) {
+    // This state should ideally not be visibly rendered if router.replace is effective.
+    // It's a fallback or for the brief moment before redirection completes.
+    return (
+         <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden items-center justify-center">
+            <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+    );
+  }
+
+  // Render editor content only if authenticated
   return (
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
       <AppHeader

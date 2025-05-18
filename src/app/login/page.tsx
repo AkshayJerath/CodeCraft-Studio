@@ -19,6 +19,7 @@ import { z } from "zod";
 import { loginUser } from "@/app/actions/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock } from "lucide-react";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -29,6 +30,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize useRouter
   const {
     register,
     handleSubmit,
@@ -43,10 +45,14 @@ export default function LoginPage() {
       if (result.success) {
         toast({
           title: "Login Successful",
-          description: "Welcome back!",
+          description: result.message || "Welcome back! Redirecting...",
         });
-        // Here you would typically redirect the user or update app state
-        // e.g., router.push('/dashboard');
+        console.log("Login successful. Setting localStorage 'isLoggedIn' to true.");
+        localStorage.setItem('isLoggedIn', 'true');
+        console.log("localStorage 'isLoggedIn' is now:", localStorage.getItem('isLoggedIn'));
+        console.log("Attempting to redirect to / editor page.");
+        router.push('/'); // Redirect to the editor page
+        // router.refresh(); // You could try this if router.push alone isn't enough, but it's usually not needed.
       } else {
         toast({
           title: "Login Failed",
@@ -55,6 +61,7 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
+      console.error("Login submission error:", error);
       toast({
         title: "Login Error",
         description: "An unexpected error occurred during login.",
