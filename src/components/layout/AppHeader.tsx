@@ -2,7 +2,9 @@
 "use client";
 
 import type { FC } from 'react';
-import Link from 'next/link'; // Import Link
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Play, Download, Sparkles, Settings, Trash2, UserCircle } from 'lucide-react';
+import { Play, Download, Sparkles, Settings, Trash2, UserCircle, LogOut } from 'lucide-react'; // Added LogOut
 
 interface AppHeaderProps {
   selectedLanguage: string;
@@ -36,6 +38,24 @@ export const AppHeader: FC<AppHeaderProps> = ({
   isExecuting,
   isExplaining,
 }) => {
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check login status when the component mounts
+    const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+    setIsUserLoggedIn(loggedInStatus);
+    console.log('AppHeader useEffect: isUserLoggedIn set to', loggedInStatus);
+  }, []); // Empty dependency array means it runs once on mount
+
+  const handleLogout = () => {
+    console.log('AppHeader: handleLogout called');
+    localStorage.removeItem('isLoggedIn');
+    setIsUserLoggedIn(false); // Update state immediately
+    router.push('/login');
+    // Consider adding a toast message for logout confirmation
+  };
+
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-4 shadow-sm">
       <Link href="/" className="flex items-center gap-3">
@@ -60,7 +80,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onRunCode} disabled={isExecuting} className="hover:bg-primary/10 hover:text-primary border-primary/50">
+              <Button variant="outline" size="icon" onClick={onRunCode} disabled={isExecuting || !isUserLoggedIn} className="hover:bg-primary/10 hover:text-primary border-primary/50">
                 <Play className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
@@ -71,7 +91,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onDownloadCode} className="hover:bg-primary/10 hover:text-primary">
+              <Button variant="outline" size="icon" onClick={onDownloadCode} disabled={!isUserLoggedIn} className="hover:bg-primary/10 hover:text-primary">
                 <Download className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
@@ -82,7 +102,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onExplainCode} disabled={isExplaining} className="hover:bg-accent/20 text-accent-foreground border-accent/50">
+              <Button variant="outline" size="icon" onClick={onExplainCode} disabled={isExplaining || !isUserLoggedIn} className="hover:bg-accent/20 text-accent-foreground border-accent/50">
                 <Sparkles className="h-5 w-5 text-accent" />
               </Button>
             </TooltipTrigger>
@@ -93,7 +113,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
           
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onClearTerminal} className="hover:bg-destructive/10 hover:text-destructive-foreground border-destructive/50">
+              <Button variant="outline" size="icon" onClick={onClearTerminal} disabled={!isUserLoggedIn} className="hover:bg-destructive/10 hover:text-destructive-foreground border-destructive/50">
                 <Trash2 className="h-5 w-5 text-destructive" />
               </Button>
             </TooltipTrigger>
@@ -115,21 +135,33 @@ export const AppHeader: FC<AppHeaderProps> = ({
             </TooltipContent>
           </Tooltip>
           
-          {/* Basic Login/Register link example - can be improved with auth state */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">
-                    <Link href="/login">
-                        <UserCircle className="h-5 w-5 mr-1 md:mr-2" />
-                        <span className="hidden md:inline">Login</span>
-                    </Link>
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent className="bg-popover text-popover-foreground border-border">
-                <p>Login or Register</p>
-            </TooltipContent>
-          </Tooltip>
-
+          {isUserLoggedIn ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-destructive/10 hover:text-destructive">
+                      <LogOut className="h-5 w-5 mr-1 md:mr-2" />
+                      <span className="hidden md:inline">Logout</span>
+                  </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                  <p>Logout</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" asChild className="hover:bg-primary/10 hover:text-primary">
+                      <Link href="/login">
+                          <UserCircle className="h-5 w-5 mr-1 md:mr-2" />
+                          <span className="hidden md:inline">Login</span>
+                      </Link>
+                  </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-popover text-popover-foreground border-border">
+                  <p>Login or Register</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </TooltipProvider>
       </div>
     </header>

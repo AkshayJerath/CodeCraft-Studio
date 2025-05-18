@@ -9,8 +9,8 @@ import { TerminalOutput, type TerminalMessage } from '@/components/terminal/Term
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useToast } from "@/hooks/use-toast";
 import { explainCode, type ExplainCodeInput } from '@/ai/flows/explain-code';
-import { useRouter } from 'next/navigation'; // Import useRouter
-import { Skeleton } from '@/components/ui/skeleton'; // For loading state
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const initialCodeSamples: Record<string, string> = {
   python: 'name = input("Enter your name: ")\nprint(f"Hello, {name}!")',
@@ -45,13 +45,12 @@ export default function CodeCraftStudioPage() {
   const monacoRef = useRef<Monaco | null>(null);
 
   useEffect(() => {
-    // Client-side only check for authentication
     console.log("Editor page: useEffect for auth check triggered.");
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
     console.log("Editor page: localStorage 'isLoggedIn' status from localStorage:", loggedIn);
     
     setIsAuthenticated(loggedIn);
-    setIsLoadingAuth(false); // Done checking
+    setIsLoadingAuth(false); 
 
     if (!loggedIn) {
       console.log("Editor page: Not authenticated, redirecting to /login.");
@@ -59,7 +58,7 @@ export default function CodeCraftStudioPage() {
     } else {
       console.log("Editor page: Authenticated, proceeding to render editor.");
     }
-  }, [router]); // router is a stable dependency
+  }, [router]);
 
   const addTerminalMessage = useCallback((type: TerminalMessage['type'], content: string) => {
     setTerminalMessages(prev => [...prev.slice(-100), {
@@ -68,7 +67,7 @@ export default function CodeCraftStudioPage() {
       content,
       timestamp: (type !== 'user-input' && type !== 'input-prompt') ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit'}) : undefined,
     }]);
-  }, []);
+  }, []); // Empty dependency array as it doesn't rely on props/state for its own definition
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -80,42 +79,42 @@ export default function CodeCraftStudioPage() {
     }
   }, []);
 
-
   useEffect(() => {
-    // Only run if authenticated
     if (isAuthenticated) {
       setCode(initialCodeSamples[selectedLanguage] || `// Start coding in ${selectedLanguage}...`);
       if (terminalMessages.length > 1 || terminalMessages[0].id !== 'welcome') {
           addTerminalMessage('system', `Switched to ${selectedLanguage} environment. Sample code loaded.`);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLanguage, isAuthenticated]); // addTerminalMessage removed, isAuthenticated added
+  }, [selectedLanguage, isAuthenticated, addTerminalMessage, terminalMessages]);
   
   const handleEditorDidMount = (editor: any, monacoInstance: Monaco) => {
     editorRef.current = editor;
     monacoRef.current = monacoInstance;
-    // Only focus if authenticated and editor is ready
     if (isAuthenticated) {
       editor.focus();
     }
     
-    if (monacoInstance) {
+    if (monacoInstance && isAuthenticated) { // Ensure monaco and auth before adding command
         editor.addCommand(
           monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
           () => {
-            if (!isExecuting && isAuthenticated) handleRunCode();
+            if (!isExecuting) handleRunCode(); // No need to check auth again here if command only added when auth'd
           }
         );
       }
   };
 
   const handleLanguageChange = (language: string) => {
+    if (!isAuthenticated) return;
     setSelectedLanguage(language);
   };
 
   const handleRunCode = useCallback(() => {
-    if (!isAuthenticated) return; // Should not happen if guard is effective
+    if (!isAuthenticated) {
+        toast({ title: "Not Authenticated", description: "Please log in to run code.", variant: "destructive" });
+        return;
+    }
     setIsExecuting(true);
     addTerminalMessage('log', `Executing ${selectedLanguage} code... (Simulation)`);
     
@@ -134,7 +133,7 @@ export default function CodeCraftStudioPage() {
 
     addTerminalMessage('input-prompt', `Enter input for your program (if any), then press Enter:`);
     setShowInputPrompt(true);
-  }, [selectedLanguage, addTerminalMessage, isAuthenticated]);
+  }, [selectedLanguage, addTerminalMessage, isAuthenticated, toast]);
 
   const handleTerminalInputCommand = (input: string) => {
     if (!isAuthenticated) return;
@@ -158,8 +157,12 @@ export default function CodeCraftStudioPage() {
   };
 
   const handleDownloadCode = () => {
-    if (!isAuthenticated || !code.trim()) {
-      toast({ title: "Empty Code", description: "There's no code to download or you are not authenticated.", variant: "destructive" });
+    if (!isAuthenticated) {
+      toast({ title: "Not Authenticated", description: "Please log in to download code.", variant: "destructive" });
+      return;
+    }
+    if (!code.trim()) {
+      toast({ title: "Empty Code", description: "There's no code to download.", variant: "destructive" });
       return;
     }
     const fileExtensionMap: Record<string, string> = {
@@ -181,8 +184,12 @@ export default function CodeCraftStudioPage() {
   };
 
   const handleExplainCode = async () => {
-    if (!isAuthenticated || !code.trim()) {
-      toast({ title: "Empty Code", description: "Write some code to explain or you are not authenticated.", variant: "destructive" });
+    if (!isAuthenticated) {
+      toast({ title: "Not Authenticated", description: "Please log in to use AI features.", variant: "destructive" });
+      return;
+    }
+    if (!code.trim()) {
+      toast({ title: "Empty Code", description: "Write some code to explain.", variant: "destructive" });
       return;
     }
     setIsExplaining(true);
@@ -207,7 +214,10 @@ export default function CodeCraftStudioPage() {
   };
   
   const handleClearTerminal = () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+        toast({ title: "Not Authenticated", description: "Please log in to clear terminal.", variant: "destructive" });
+        return;
+    }
     setTerminalMessages([
         { 
             id: `${Date.now()}-cleared`, 
@@ -234,11 +244,8 @@ export default function CodeCraftStudioPage() {
     );
   }
 
-  // If, after loading, not authenticated, this component should not render its main content.
-  // The useEffect with router.replace('/login') should prevent this from being visible for long, if at all.
   if (!isAuthenticated) {
-    // This state should ideally not be visibly rendered if router.replace is effective.
-    // It's a fallback or for the brief moment before redirection completes.
+    // This state is if redirection is in progress or failed, should not be visible for long.
     return (
          <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden items-center justify-center">
             <p className="text-muted-foreground">Redirecting to login...</p>
