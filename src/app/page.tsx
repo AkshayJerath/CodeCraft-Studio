@@ -43,6 +43,8 @@ export default function CodeCraftStudioPage() {
   const { toast } = useToast();
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
+  const prevSelectedLanguageRef = useRef<string | undefined>();
+
 
   useEffect(() => {
     console.log("Editor page: useEffect for auth check triggered.");
@@ -67,7 +69,7 @@ export default function CodeCraftStudioPage() {
       content,
       timestamp: (type !== 'user-input' && type !== 'input-prompt') ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit'}) : undefined,
     }]);
-  }, []); // Empty dependency array as it doesn't rely on props/state for its own definition
+  }, []); 
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -82,11 +84,15 @@ export default function CodeCraftStudioPage() {
   useEffect(() => {
     if (isAuthenticated) {
       setCode(initialCodeSamples[selectedLanguage] || `// Start coding in ${selectedLanguage}...`);
-      if (terminalMessages.length > 1 || terminalMessages[0].id !== 'welcome') {
-          addTerminalMessage('system', `Switched to ${selectedLanguage} environment. Sample code loaded.`);
+      // Add message only if selectedLanguage has actually changed from a previous value 
+      // and it's not the initial load state where prevSelectedLanguageRef.current is undefined.
+      if (prevSelectedLanguageRef.current !== undefined && prevSelectedLanguageRef.current !== selectedLanguage) {
+        addTerminalMessage('system', `Switched to ${selectedLanguage} environment. Sample code loaded.`);
       }
+      // Update ref for the next render.
+      prevSelectedLanguageRef.current = selectedLanguage;
     }
-  }, [selectedLanguage, isAuthenticated, addTerminalMessage, terminalMessages]);
+  }, [selectedLanguage, isAuthenticated, addTerminalMessage]);
   
   const handleEditorDidMount = (editor: any, monacoInstance: Monaco) => {
     editorRef.current = editor;
@@ -95,18 +101,21 @@ export default function CodeCraftStudioPage() {
       editor.focus();
     }
     
-    if (monacoInstance && isAuthenticated) { // Ensure monaco and auth before adding command
+    if (monacoInstance && isAuthenticated) { 
         editor.addCommand(
           monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter,
           () => {
-            if (!isExecuting) handleRunCode(); // No need to check auth again here if command only added when auth'd
+            if (!isExecuting && isAuthenticated) handleRunCode(); 
           }
         );
       }
   };
 
   const handleLanguageChange = (language: string) => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+        toast({ title: "Not Authenticated", description: "Please log in to change language.", variant: "destructive" });
+        return;
+    }
     setSelectedLanguage(language);
   };
 
@@ -136,7 +145,10 @@ export default function CodeCraftStudioPage() {
   }, [selectedLanguage, addTerminalMessage, isAuthenticated, toast]);
 
   const handleTerminalInputCommand = (input: string) => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+        toast({ title: "Not Authenticated", description: "Please log in to provide input.", variant: "destructive" });
+        return;
+    }
     setShowInputPrompt(false);
     addTerminalMessage('user-input', input || "(empty input)");
     
@@ -293,3 +305,5 @@ export default function CodeCraftStudioPage() {
     </div>
   );
 }
+
+    
