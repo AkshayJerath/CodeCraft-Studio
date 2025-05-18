@@ -19,7 +19,7 @@ import { z } from "zod";
 import { loginUser } from "@/app/actions/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock } from "lucide-react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation"; 
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -30,7 +30,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter(); 
   const {
     register,
     handleSubmit,
@@ -49,10 +49,14 @@ export default function LoginPage() {
         });
         console.log("Login successful. Setting localStorage 'isLoggedIn' to true.");
         localStorage.setItem('isLoggedIn', 'true');
+        if (result.username) {
+          console.log("Storing username in localStorage:", result.username);
+          localStorage.setItem('username', result.username);
+        }
         console.log("localStorage 'isLoggedIn' is now:", localStorage.getItem('isLoggedIn'));
-        console.log("Attempting to redirect to / editor page.");
-        router.push('/'); // Redirect to the editor page
-        // router.refresh(); // You could try this if router.push alone isn't enough, but it's usually not needed.
+        console.log("localStorage 'username' is now:", localStorage.getItem('username'));
+        console.log("Attempting to redirect to editor page: /");
+        router.push('/'); 
       } else {
         toast({
           title: "Login Failed",

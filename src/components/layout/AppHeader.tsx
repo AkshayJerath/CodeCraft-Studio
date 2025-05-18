@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Play, Download, Sparkles, Settings, Trash2, UserCircle, LogOut } from 'lucide-react'; // Added LogOut
+import { Play, Download, Sparkles, Settings, Trash2, UserCircle, LogOut } from 'lucide-react'; 
 
 interface AppHeaderProps {
   selectedLanguage: string;
@@ -42,18 +42,17 @@ export const AppHeader: FC<AppHeaderProps> = ({
   const router = useRouter();
 
   useEffect(() => {
-    // Check login status when the component mounts
     const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
     setIsUserLoggedIn(loggedInStatus);
     console.log('AppHeader useEffect: isUserLoggedIn set to', loggedInStatus);
-  }, []); // Empty dependency array means it runs once on mount
+  }, []); 
 
   const handleLogout = () => {
     console.log('AppHeader: handleLogout called');
     localStorage.removeItem('isLoggedIn');
-    setIsUserLoggedIn(false); // Update state immediately
+    localStorage.removeItem('username'); // Clear username on logout
+    setIsUserLoggedIn(false); 
     router.push('/login');
-    // Consider adding a toast message for logout confirmation
   };
 
   return (
@@ -63,8 +62,12 @@ export const AppHeader: FC<AppHeaderProps> = ({
         <h1 className="text-xl font-bold tracking-tight text-foreground">CodeCraft Studio</h1>
       </Link>
       <div className="flex items-center gap-2 md:gap-3">
-        <Select value={selectedLanguage} onValueChange={onLanguageChange}>
-          <SelectTrigger className="w-[130px] md:w-[150px] bg-background text-foreground focus:ring-primary h-9">
+        <Select value={selectedLanguage} onValueChange={onLanguageChange} disabled={!isUserLoggedIn}>
+          <SelectTrigger 
+            className="w-[130px] md:w-[150px] bg-background text-foreground focus:ring-primary h-9"
+            aria-disabled={!isUserLoggedIn}
+            disabled={!isUserLoggedIn}
+            >
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent className="bg-popover text-popover-foreground">

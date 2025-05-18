@@ -29,11 +29,12 @@ interface ActionResult {
   success: boolean;
   error?: string;
   message?: string;
+  username?: string; // Added to return username on successful login
 }
 
 async function getDb(): Promise<Db> {
   const client = await clientPromise;
-  return client.db(); // You can specify your database name here if it's not in the URI, e.g., client.db("myAppDb")
+  return client.db(); 
 }
 
 async function getUsersCollection(): Promise<Collection<UserDocument>> {
@@ -59,9 +60,8 @@ export async function loginUser(
       return { success: false, error: "Invalid email or password." };
     }
 
-    console.log("Login successful for:", values.email);
-    // Note: In a real app, you'd issue a session token (e.g., JWT) here.
-    return { success: true, message: "Login successful!" };
+    console.log("Login successful for:", values.email, "Username:", user.username);
+    return { success: true, message: "Login successful!", username: user.username };
 
   } catch (error) {
     console.error("Login error:", error);
@@ -86,8 +86,7 @@ export async function registerUser(
         return { success: false, error: "This username is already taken." };
     }
 
-
-    const passwordHash = await bcrypt.hash(values.password, 10); // Salt rounds = 10
+    const passwordHash = await bcrypt.hash(values.password, 10); 
 
     const newUser: UserDocument = {
       username: values.username,
