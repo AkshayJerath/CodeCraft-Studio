@@ -7,42 +7,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Moon, Sun, User } from 'lucide-react';
-import Link from 'next/link'; // Ensure Link is imported
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
-  const [isDarkTheme, setIsDarkTheme] = useState(true); // Default to true or derive from localStorage
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
   const router = useRouter();
 
   useEffect(() => {
-    // Auth check
-    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    setIsAuthenticated(loggedIn);
-    if (!loggedIn) {
-      router.replace('/login'); // Redirect if not authenticated
-      return; // Stop further execution if not authenticated
-    }
+    // This effect runs only on the client side
+    if (typeof window !== 'undefined') {
+      // Auth check
+      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      setIsAuthenticated(loggedIn);
 
-    // Load theme preference from localStorage on mount
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme) {
-      const newIsDarkTheme = storedTheme === 'dark';
-      setIsDarkTheme(newIsDarkTheme);
-      document.documentElement.classList.toggle('dark', newIsDarkTheme);
-    } else {
-      // Default to system preference if no theme stored, then save it
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkTheme(prefersDark);
-      document.documentElement.classList.toggle('dark', prefersDark);
-      localStorage.setItem('theme', prefersDark ? 'dark' : 'light'); 
-    }
+      if (!loggedIn) {
+        router.replace('/login'); // Redirect if not authenticated
+        return; 
+      }
 
-    // Load username from localStorage
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      setUsername(storedUsername);
+      // Load theme preference from localStorage on mount
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) {
+        const newIsDarkTheme = storedTheme === 'dark';
+        setIsDarkTheme(newIsDarkTheme);
+        document.documentElement.classList.toggle('dark', newIsDarkTheme);
+      } else {
+        // Default to system preference if no theme stored, then save it
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setIsDarkTheme(prefersDark);
+        document.documentElement.classList.toggle('dark', prefersDark);
+        localStorage.setItem('theme', prefersDark ? 'dark' : 'light');
+      }
+
+      // Load username from localStorage
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+      setIsLoading(false); // Finished loading client-side data
     }
   }, [router]);
 
@@ -55,10 +61,24 @@ export default function SettingsPage() {
       document.documentElement.classList.remove('dark');
     }
   };
+
+  if (isLoading) {
+    // Render a loading state or null while checking auth and loading client-side data
+    return (
+        <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden items-center justify-center">
+            <p className="text-muted-foreground">Loading settings...</p>
+        </div>
+    );
+  }
   
   if (!isAuthenticated) {
-    // Render nothing or a loading indicator while redirecting
-    return null; 
+    // This case should ideally be handled by the redirect in useEffect,
+    // but as a fallback, show a message or redirect again.
+    return (
+        <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden items-center justify-center">
+            <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+    );
   }
 
   return (

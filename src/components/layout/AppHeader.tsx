@@ -42,15 +42,20 @@ export const AppHeader: FC<AppHeaderProps> = ({
   const router = useRouter();
 
   useEffect(() => {
-    const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-    setIsUserLoggedIn(loggedInStatus);
-    console.log('AppHeader useEffect: isUserLoggedIn set to', loggedInStatus);
+    // This effect runs only on the client side
+    if (typeof window !== 'undefined') {
+        const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+        setIsUserLoggedIn(loggedInStatus);
+        console.log('AppHeader useEffect: isUserLoggedIn set to', loggedInStatus);
+    }
   }, []); 
 
   const handleLogout = () => {
     console.log('AppHeader: handleLogout called');
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('username'); // Clear username on logout
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username'); // Clear username on logout
+    }
     setIsUserLoggedIn(false); 
     router.push('/login');
   };
