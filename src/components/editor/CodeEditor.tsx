@@ -41,21 +41,21 @@ export const CodeEditor: FC<CodeEditorProps> = ({
         loading={<Skeleton className="h-full w-full bg-muted/50" />}
         options={{
           fontFamily: "var(--font-geist-mono)",
-          minimap: { enabled: true, scale:1 },
+          minimap: { enabled: true, scale: 1 },
           fontSize: 14,
           wordWrap: "on",
           scrollBeyondLastLine: false,
           automaticLayout: true,
           padding: { top: 16, bottom: 16 },
-          renderLineHighlight: "gutter",
+          // renderLineHighlight: "gutter", // Removed for troubleshooting
           scrollbar: {
             verticalScrollbarSize: 10,
             horizontalScrollbarSize: 10,
           },
-          glyphMargin: true,
+          // glyphMargin: true, // Removed for troubleshooting
           folding: true,
           lineNumbers: "on",
-          lineDecorationsWidth: 10,
+          // lineDecorationsWidth: 10, // Removed for troubleshooting
           lineNumbersMinChars: 3,
           renderWhitespace: "boundary",
           cursorSmoothCaretAnimation: "on",
