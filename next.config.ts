@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Server Actions are enabled by default in Next.js 14+
+  // experimental: {
+  //   serverActions: true, // Explicitly enabling, though often default
+  // },
 };
 
 export default nextConfig;
