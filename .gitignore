@@ -43,3 +43,30 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+
+# Docker
+docker-compose.override.yml
+
+# Temporary execution files
+docker/temp/
+docker/execution/
+
+# Environment files
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Vercel
+.vercel
+
+# Environment files
+.env*.local
+
+# Docker (exclude from Vercel)
+docker/node_modules
+
+/.idx

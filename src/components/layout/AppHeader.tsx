@@ -80,8 +80,6 @@ export const AppHeader: FC<AppHeaderProps> = ({
             <SelectItem value="python">Python</SelectItem>
             <SelectItem value="java">Java</SelectItem>
             <SelectItem value="typescript">TypeScript</SelectItem>
-            <SelectItem value="html">HTML</SelectItem>
-            <SelectItem value="css">CSS</SelectItem>
           </SelectContent>
         </Select>
 

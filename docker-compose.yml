@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - CODE_EXECUTOR_URL=http://code-executor:3001
+    depends_on:
+      - code-executor
+    networks:
+      - app-network
+
+  code-executor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.executor
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - EXECUTION_TIMEOUT=30000
+      - MAX_OUTPUT_SIZE=1048576
+    networks:
+      - app-network
+    # Remove read-only to allow temp file creation
+    # read_only: true
+    tmpfs:
+      - /tmp:size=100m,exec
+      # Use writable temp directory instead of tmpfs
+    volumes:
+      - temp-volume:/app/temp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  temp-volume:

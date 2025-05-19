@@ -1,7 +1,6 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -18,10 +17,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Server Actions are enabled by default in Next.js 14+
-  // experimental: {
-  //   serverActions: true, // Explicitly enabling, though often default
-  // },
+  // Environment variables for code execution service
+  env: {
+    NEXT_PUBLIC_CODE_EXECUTOR_URL: process.env.NEXT_PUBLIC_CODE_EXECUTOR_URL || 'http://localhost:3001',
+  },
 };
 
 export default nextConfig;
