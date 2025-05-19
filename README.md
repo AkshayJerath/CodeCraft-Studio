@@ -72,8 +72,8 @@ Welcome to **CodeCraft Studio**, a powerful multi-language code execution platfo
 ### Local Setup
 
 ```bash
-git clone https://github.com/AkshayJerath/studio
-cd studio
+git clone https://github.com/AkshayJerath/CodeCraft-Studio
+cd CodeCraft-Studio
 npm install
 ````
 
