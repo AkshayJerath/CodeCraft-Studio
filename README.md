@@ -1,8 +1,3 @@
-Here’s your full content formatted into a professional `README.md` for GitHub:
-
----
-
-````markdown
 # CodeCraft Studio 🚀
 
 Welcome to **CodeCraft Studio**, a powerful multi-language code execution platform providing **real-time code execution** in a secure, containerized environment. Write, execute, and learn programming with **instant feedback** across multiple languages.
@@ -298,6 +293,3 @@ npm run docker:logs    # Show container logs
 ---
 
 **Happy Coding! 🎉
-Built with ❤️ for learners, by learners.**
-
-```
