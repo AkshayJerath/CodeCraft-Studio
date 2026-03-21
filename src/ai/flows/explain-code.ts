@@ -25,10 +25,11 @@ export type ExplainCodeOutput = z.infer<typeof ExplainCodeOutputSchema>;
 export async function explainCode(input: ExplainCodeInput): Promise<ExplainCodeOutput> {
   try {
     const result = await explainCodeFlow(input);
-    return { explanation: String(result.explanation) };
+    return { explanation: String(result.explanation || "No explanation provided.") };
   } catch (err: any) {
     console.error('Error in explainCode server action:', err);
-    throw new Error(err?.message || 'Failed to explain code');
+    // Return error as normal text to bypass Next.js error masking in production
+    return { explanation: `API Error: ${err?.message || 'Failed to explain code. Did you set your API Key?'}` };
   }
 }
 
@@ -47,7 +48,7 @@ const explainCodeFlow = ai.defineFlow(
     inputSchema: ExplainCodeInputSchema,
     outputSchema: ExplainCodeOutputSchema,
   },
-  async input => {
+  async (input: ExplainCodeInput) => {
     const {output} = await prompt(input);
     return output!;
   }
