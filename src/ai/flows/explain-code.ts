@@ -23,7 +23,13 @@ const ExplainCodeOutputSchema = z.object({
 export type ExplainCodeOutput = z.infer<typeof ExplainCodeOutputSchema>;
 
 export async function explainCode(input: ExplainCodeInput): Promise<ExplainCodeOutput> {
-  return explainCodeFlow(input);
+  try {
+    const result = await explainCodeFlow(input);
+    return { explanation: String(result.explanation) };
+  } catch (err: any) {
+    console.error('Error in explainCode server action:', err);
+    throw new Error(err?.message || 'Failed to explain code');
+  }
 }
 
 const prompt = ai.definePrompt({
