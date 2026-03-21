@@ -369,6 +369,14 @@ export default function CodeCraftStudioPage() {
   };
 
   const handleExplainCode = async () => {
+    // TEMPORARILY DISABLED FOR MAINTENANCE
+    toast({ 
+      title: "Feature Maintenance", 
+      description: "AI Code Explanation is currently under maintenance. We'll be back soon!", 
+    });
+    addTerminalMessage('system', '⚠️ The AI Explain feature is temporarily unavailable due to maintenance.');
+    return;
+
     if (!isAuthenticated) {
       toast({ title: "Not Authenticated", description: "Please log in to use AI features.", variant: "destructive" });
       return;
