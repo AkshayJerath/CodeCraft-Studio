@@ -1,12 +1,13 @@
 import {genkit} from 'genkit';
-import {openAI} from '@genkit-ai/openai';
+import {openAICompatible} from '@genkit-ai/compat-oai';
 
 export const ai = genkit({
   plugins: [
-    openAI({
+    openAICompatible({
+      name: 'groq',
       baseURL: 'https://api.groq.com/openai/v1',
       apiKey: process.env.GROQ_API_KEY,
     }),
   ],
-  model: 'openai/llama-3.3-70b-versatile',
+  model: 'groq/llama-3.3-70b-versatile',
 });
