@@ -21,12 +21,6 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_CODE_EXECUTOR_URL: process.env.NEXT_PUBLIC_CODE_EXECUTOR_URL || 'http://localhost:3001',
   },
-  serverExternalPackages: [
-    '@opentelemetry/sdk-node',
-    '@opentelemetry/exporter-jaeger',
-    'genkit',
-    '@genkit-ai/next'
-  ],
 };
 
 export default nextConfig;

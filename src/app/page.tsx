@@ -64,21 +64,16 @@ export default function CodeCraftStudioPage() {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const prevSelectedLanguageRef = useRef<string | undefined>();
-  const prevHealthRef = useRef<boolean | null>(null);
 
   // Check code execution service health
   useEffect(() => {
     const checkServiceHealth = async () => {
       const healthy = await codeExecutor.checkHealth();
       setIsServiceHealthy(healthy);
-      
-      if (prevHealthRef.current !== healthy) {
-        if (!healthy) {
-          addTerminalMessage('error', 'Code execution service is not available. Please ensure Docker containers are running.');
-        } else {
-          addTerminalMessage('system', 'Code execution service is ready.');
-        }
-        prevHealthRef.current = healthy;
+      if (!healthy) {
+        addTerminalMessage('error', 'Code execution service is not available. Please ensure Docker containers are running.');
+      } else {
+        addTerminalMessage('system', 'Code execution service is ready.');
       }
     };
     
@@ -86,7 +81,7 @@ export default function CodeCraftStudioPage() {
     // Check health every 30 seconds
     const healthInterval = setInterval(checkServiceHealth, 30000);
     return () => clearInterval(healthInterval);
-  }, [addTerminalMessage]);
+  }, []);
 
   useEffect(() => {
     console.log("Editor page: useEffect for auth check triggered.");
